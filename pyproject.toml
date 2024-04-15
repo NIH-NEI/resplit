@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resplit"
+version = "0.1"
+authors = [{name="NEI OSIO Bioinformatics Core", email="NEIOSIO@mail.nih.gov"}]
+description = "Split or merge tiff file based on REShAPE output file."
+dependencies = [
+    "tifffile==2024.2.12",
+    "numpy==1.26.4",
+    ]
+
+[project.scripts]
+resplit = "resplit:main"
+
