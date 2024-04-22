@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "resplit"
-version = "0.1"
+version = "0.2"
 authors = [{name="NEI OSIO Bioinformatics Core", email="NEIOSIO@mail.nih.gov"}]
 description = "Split or merge tiff file based on REShAPE output file."
 dependencies = [
