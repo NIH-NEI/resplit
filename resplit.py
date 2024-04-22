@@ -10,6 +10,7 @@ import numpy as np
 
 
 def cli(arguments):
+    print("[TESTING] WELCOME")
     parser = argparse.ArgumentParser(
         description="Split or merge tiffs using reshape split", prog="reSplit"
     )
