@@ -20,7 +20,7 @@ def cli(arguments):
     merge_subparser = subparser.add_parser("merge", help="merge the split images")
     split_subparser.add_argument("reshape", type=pathlib.Path, help="ReShAPE JSON file")
     split_subparser.add_argument(
-        "split", type=pathlib.Path, help="source image (TIFF format)"
+        "source", type=pathlib.Path, help="source image to split (TIFF format)"
     )
     merge_subparser.add_argument("reshape", type=pathlib.Path, help="ReShAPE JSON file")
     merge_subparser.add_argument(
@@ -40,20 +40,26 @@ def split_main(args):
     with open(args.reshape, "r") as f:
         stitch_guide = json.load(f)
     fp = tifffile.imread(args.source)
-    base_path, ext = os.path.splitext(args.source)
+    _, ext = os.path.splitext(args.source)
+    working_dir = os.path.dirname(args.source) 
+    out_dir = os.path.join(working_dir, "split")
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
     for tile in stitch_guide["tiles"]:
-        n, _ = os.path.splitext(tile["name"])
-        new_suffix = n.split("_")[-1]
-        out_fname = f"{base_path}_{new_suffix}{ext}"
+        _, fname = os.path.split(tile["name"])
+        n, _ = os.path.splitext(fname)
+        #new_suffix = n.split("_")[-1]
+        out_fname = os.path.join(out_dir, f"{n}{ext}")
+        print(f"[INFO] Writing split image: '{out_fname}'")
         tifffile.imwrite(
             out_fname,
             fp[tile["y"] : tile["y"] + tile["h"], tile["x"] : tile["x"] + tile["w"]],
         )
-        print(f"[INFO] writing: {out_fname}")
 
 
 def merge_main(args):
     # TODO merge the corrected parts back together.
+    assert os.path.exists(args.reshape), f"REShAPE file '{args.reshape}' does not exist"
     with open(args.reshape, "r") as f:
         stitch_guide = json.load(f)
     blank_array = np.zeros(
@@ -63,11 +69,21 @@ def merge_main(args):
     # just use the pixel order in the image itself!
     for tile in stitch_guide["tiles"]:
         target = os.path.join(args.source, tile["name"])
+        print(f"[INFO] Processing tile: {target}")
+        if not os.path.exists(target):
+            err = [f"{target}"]
+            target = target.replace(".tif", ".tiff")
+            print(f"[INFO] Using alternate tiff ending '{target}'...")
+            if not os.path.exists(target):
+                err.append(target)
+                print("[ERROR] Could not find file: '{err[0]}' or '{err[-1]}'")
+                sys.exit(1)
         tile_arr = tifffile.imread(target)
         blank_array[
             tile["y"] : tile["y"] + tile["h"], tile["x"] : tile["x"] + tile["w"]
         ] = tile_arr
     im_title = f"{os.path.basename(stitch_guide['source'])}.tif"
+    print(f"[INFO] Writing result to: '{im_title}'...")
     tifffile.imwrite(im_title, blank_array)
 
 
